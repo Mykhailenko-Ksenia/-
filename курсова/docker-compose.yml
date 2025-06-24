@@ -1,0 +1,53 @@
+
+services:
+  backend:
+    image: node:23-alpine3.20
+    depends_on:
+      - web-server
+      - database
+    volumes:
+      - .:/opt/global_chat
+    networks:
+      - private
+      - public
+    ports:
+      - 8080:8080
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    working_dir: /opt/global_chat
+    entrypoint: npm run server
+
+  web-server:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./src/frontend:/usr/share/nginx/html:ro
+    ports:
+      - '80:80'
+    restart: unless-stopped
+    networks:
+      - public
+
+  database:
+    image: postgres:latest
+    restart: unless-stopped
+    container_name: global_chat_database
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: 1111
+    volumes:
+      - ./src/database:/opt/global_chat/sql
+      - ./docker/database:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - private
+
+volumes:
+  postgres_data:
+
+networks:
+  public:
+    driver: bridge
+  private:
+    driver: bridge
